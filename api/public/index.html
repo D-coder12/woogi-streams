@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movies & Series Dashboard</title>
+    <link rel="stylesheet" href="/woogi-streams-backend-codveda/api/public/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body {
+            
+            background-color: #1F2937;
+            background-image: linear-gradient(135deg, #283547 0%, #41536b 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        :root {
+            --bg-primary: #f0f2f9;
+            --bg-secondary: #ffffff;
+            --bg-panel: #eef2fa;
+            --accent-color: #ff5252;
+            --text-main: #2b2d42;
+            --text-muted: #8d99ae;
+            --card-shadow: 0 10px 20px rgba(0,0,0,0.05);
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+        .dashboard-container {
+            display: grid;
+            grid-template-columns: 220px 1fr 280px;
+            width: 100%;
+            max-width: 1280px;
+            height: 850px;
+            background-color: var(--bg-primary);
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+        /* Sidebar */
+        .sidebar {
+            background-color: var(--bg-primary);
+            padding: 30px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+        }
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .brand-icon {
+            font-size: 1.5rem;
+            color: var(--text-main);
+        }
+        .brand-name {
+            font-weight: 800;
+            letter-spacing: 1px;
+            color: var(--text-main);
+        }
+        .nav-title {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+        .nav-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .nav-item a {
+            text-decoration: none;
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.9rem;
+            display : flex;
+            align-items: center;
+            gap: 12px;
+            transition: color 0.2s;
+        }
+        .nav-item.active a, .nav-item a:hover {
+            color: var(--accent-color);
+        }
+        /* Main Content Area */
+        .main-content {
+            background-color: var(--bg-secondary);
+            padding: 30px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+        .top-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .content-toggle {
+            display: flex;
+            gap: 20px;
+        }
+        .toggle-btn {
+            border: none;
+            background: none;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding-bottom: 4px;
+        }
+        .toggle-btn.active {
+            color: var(--text-main);
+            border-bottom: 2px solid var(--accent-color);
+        }
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .search-box {
+            background-color: var(--bg-primary);
+            padding: 8px 16px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .search-box input {
+            border: none;
+            background: transparent;
+            outline: none;
+            font-size: 0.85rem;
+        }
+        .search-box i {
+            color: var(--text-muted);
+        }
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: var(--bg-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        /* Featured Banner */
+        .featured-banner {
+            position: relative;
+            height: 220px;
+            border-radius: 16px;
+            background: url('https://images.unsplash.com/photo-1518173946687-a4c8a383392e?q=80&w=1000') center/cover;
+            overflow: hidden;
+            color: white;
+            display: flex;
+            align-items: flex-end;
+            padding: 24px;
+        }
+        .banner-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+        }
+        .banner-content {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+        }
+        .season-badge {
+            font-size: 0.75rem;
+            color: rgba(255,255,255,0.7);
+        }
+        .banner-title {
+            font-size: 1.8rem;
+            margin: 4px 0 16px 0;
+        }
+        .banner-actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        .btn {
+            border: none;
+            padding: 8px 18px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-watch {
+            background-color: var(--accent-color);
+            color: white;
+        }
+        .btn-add {
+            background-color: rgba(255,255,255,0.2);
+            color: white;
+            -webkit-backdrop-filter: blur(5px);
+            backdrop-filter: blur(5px);
+        }
+        .video-progress-bar {
+            height: 4px;
+            background-color: rgba(255,255,255,0.3);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            width: 45%;
+            height: 100%;
+            background-color: var(--accent-color);
+        }
+        /* Content Grids */
+            .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .section-header h2 {
+            font-size: 1.1rem;
+            color: var(--text-main);
+        }
+        .slider-controls {
+            display: flex;
+            gap: 8px;
+        }
+        .ctrl-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 1px solid var(--text-muted);
+            background: transparent;
+            cursor: pointer;
+            color: var(--text-muted);
+        }
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+        .movie-card {
+            background-color: var(--bg-secondary);
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .movie-card:hover {
+            transform: translateY(-5px);
+        }
+        .card-poster {
+            position: relative;
+            height: 160px;
+            background-size: cover;
+            background-position: center;
+            border-radius: 12px;
+        }
+        .add-btn-corner {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            background-color: rgba(255,255,255,0.3);
+            -webkit-backdrop-filter: blur(4px);
+            backdrop-filter: blur(4px);
+            border: none;
+            color: white;
+            cursor: pointer;
+        }
+        .card-info {
+            padding: 10px 0;
+        }
+        .card-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+        .card-meta {
+            display: flex;
+            gap: 12px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+        .rating {
+            color: #4361ee;
+            font-weight: 700;
+        }
+        /* Right Panel */
+        .right-panel {
+            background-color: var(--bg-panel);
+            padding: 30px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            }
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .panel-header h3 {
+            font-size: 1rem;
+            color: var(--text-main);
+        }
+        .see-more {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-decoration: none;
+        }
+        .small-card-list {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        .small-card {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            cursor: pointer;
+        }
+        .small-poster {
+            width: 44px;
+            height: 56px;
+            border-radius: 6px;
+            background-size: cover;
+            background-position: center;
+        }
+        .small-info .title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+        .small-info .genre {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin: 2px 0;
+        }
+        /* Video Modal */
+        .video-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0,0,0,0.85);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            position: relative;
+            width: 80%;
+            max-width: 800px;
+            background: black;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .close-modal {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            color: white;
+            font-size: 2rem;
+            border: none;
+            background: none;
+            cursor: pointer;
+            z-index: 1001;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="brand">
+                <i class="fa-solid fa-film brand-icon"></i>
+                <span class="brand-name">MOVIES</span>
+            </div>
+
+            <nav class="nav-section">
+                <p class="nav-title">MENU</p>
+                <ul class="nav-list">
+                    <li class="nav-item active"><a href="#"><i class="fa-solid fa-house"></i> Home</a></li>
+                    <li class="nav-item"><a href="#"><i class="fa-regular fa-compass"></i> Discover</a></li>
+                    <li class="nav-item"><a href="#"><i class="fa-solid fa-fire"></i> Top rated</a></li>
+                    <li class="nav-item"><a href="#"><i class="fa-solid fa-download"></i> Downloaded</a></li>
+                </ul>
+            </nav>
+
+            <nav class="nav-section">
+                <p class="nav-title">GENERAL</p>
+                <ul class="nav-list">
+                    <li class="nav-item"><a href="#"><i class="fa-solid fa-gear"></i> Settings</a></li>
+                    <li class="nav-item"><a href="#" id="authAction"><i class="fa-solid fa-right-from-bracket"></i> Log in</a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Main Dashboard Content -->
+        <main class="main-content">
+            <!-- Header Bar -->
+            <header class="top-header">
+                <div class="content-toggle">
+                    <button class="toggle-btn">Movies</button>
+                    <button class="toggle-btn active">Series</button>
+                </div>
+
+                <div class="header-right">
+                    <div class="search-box">
+                        <input type="text" id="searchInput" placeholder="Search">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </div>
+                    <div class="user-avatar" id="userAvatar">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Featured Banner -->
+            <section class="featured-banner">
+                <div class="banner-overlay"></div>
+                <div class="banner-content">
+                    <span class="season-badge">Season 2</span>
+                    <h1 class="banner-title">Peaky Blinders</h1>
+                    <div class="banner-actions">
+                        <button class="btn btn-watch" id="featuredPlayBtn">
+                            <i class="fa-solid fa-play"></i> Watch now
+                        </button>
+                        <button class="btn btn-add" button-type="#"><i class="fa-solid fa-plus"></i></button>
+                    </div>
+                    <div class="video-progress-bar">
+                        <div class="progress-fill"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Watchlist Section -->
+            <section class="content-section">
+                <div class="section-header">
+                    <h2>Watchlist</h2>
+                    <div class="slider-controls">
+                        <button class="ctrl-btn"><i class="fa-solid fa-chevron-left"></i></button>
+                        <button class="ctrl-btn"><i class="fa-solid fa-chevron-right"></i></button>
+                    </div>
+                </div>
+                <div class="card-grid" id="watchlistGrid">
+                    <!-- Cards populated by JS -->
+                </div>
+            </section>
+
+            <!-- Popular Series Section -->
+            <section class="content-section">
+                <div class="section-header">
+                    <h2>Popular series</h2>
+                    <div class="slider-controls">
+                        <button class="ctrl-btn"><i class="fa-solid fa-chevron-left"></i></button>
+                        <button class="ctrl-btn"><i class="fa-solid fa-chevron-right"></i></button>
+                    </div>
+                </div>
+                <div class="card-grid" id="popularGrid">
+                    <!-- Cards populated by JS -->
+                </div>
+            </section>
+        </main>
+
+        <!-- Right Side Panel -->
+        <aside class="right-panel">
+            <!-- Acclaimed Section -->
+            <div class="panel-section">
+                <div class="panel-header">
+                    <h3>Acclaimed</h3>
+                    <a href="#" class="see-more">See more</a>
+                </div>
+                <div class="small-card-list" id="acclaimedList">
+                    <!-- List Items populated by JS -->
+                </div>
+            </div>
+
+            <!-- Best Artist / Trending Section -->
+            <div class="panel-section">
+                <div class="panel-header">
+                    <h3>Best Artist</h3>
+                    <a href="#" class="see-more">See more</a>
+                </div>
+                <div class="small-card-list" id="bestArtistList">
+                    <!-- List Items populated by JS -->
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Hidden Video Modal Player -->
+    <div class="video-modal" id="videoModal">
+        <div class="modal-content">
+            <button class="close-modal" id="closeModal">&times;</button>
+            <video id="modalPlayer" controls width="100%">
+                <source id="modalVideoSource" src="" type="video/mp4">
+            </video>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
